@@ -48,7 +48,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0-beta.4/tex-mml-chtml.js" id="MathJax-script"></script>
 
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<style>.btn{margin-top: 7px; display:inline-block;}#inputty, #putty{min-height: 50px;}</style>
+	<style>
+.btn{margin-top: 7px; display:inline-block;}
+#inputty, #putty{min-height: 50px;}
+#putty{display: inline; white-space: nowrap;}
+.mathjax-inline{display: inline;}
+    </style>
 </head>
 <body>
 	<div class="container">
@@ -84,38 +89,41 @@
 			</div>
 
 			<script>
-			$(document).ready(function(){
-			
+$(document).ready(function() {
+    doIt = function() {
+        // 获取输入框的值
+        const inputText = $("#inputty").val();
+        // 使用正则表达式找到所有的数学公式，并用它们包裹
+        // 先处理块级公式，再处理行内公式，以防止行内公式干扰块级公式的匹配
+        const formattedText = inputText
+        .replace(/\\\[\s*([^\\]+?)\s*\\\]/g, '<div class="mathjax">\\[$1\\]</div>') // 块公式（\\[ ... \\]）
+        .replace(/\$\$([^$]+)\$\$/g, '<div class="mathjax">\\[$1\\]</div>') // 块公式 ($$ ... $$)
+        .replace(/\$([^$]+)\$/g, '<span class="mathjax-inline">\\($1\\)</span>'); // 行内公式
+        $("#putty").html(formattedText);
+        
+        // 排除在之前格式化之后的 mathjax 内容，重新渲染 MathJax 公式
+        MathJax.typesetPromise().then(() => {
+            // Optionally, do something after typesetting
+        });
+    }
 
-				doIt = function(){
-					$("#putty").html("\\[" + $("#inputty").val() + "\\]");
-					MathJax.typesetPromise();
-				}
-				
-				setLocation = function(){
-										doIt();
+    setLocation = function() {
+        doIt();
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('input', $("#inputty").val());
+        history.replaceState(null, null, '?' + urlParams.toString());
+    }
 
-					const urlParams = new URLSearchParams(window.location.search);
-
-					urlParams.set('input',$("#inputty").val() );
-
-					history.replaceState(null, null, '?' + urlParams.toString());
-
-				}
-
-			
-
-				$('#inputty').on('input', function() {
-    setLocation();
+    $('#inputty').on('input', function() {
+        setLocation();
+    });
+    window.onload = function() {
+        let path = new URL(document.URL);
+        let input = path.searchParams.get("input");
+        $("#inputty").val(input);
+        doIt();
+    };
 });
-					window.onload = function() {
-				let path =  new URL(document.URL)
-				let input = path.searchParams.get("input");
-				$("#inputty").val(input);
-				doIt();
-			};
-				
-			});
 		</script>
 		</footer>
 	</div>
